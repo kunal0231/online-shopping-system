@@ -1,9 +1,13 @@
 package com.shopping.service.implementation;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import com.shopping.dto.UserDetails;
 import com.shopping.dto.UserResponseDTO;
 import com.shopping.dto.UserStatusUpdateRequest;
 import com.shopping.entity.User;
@@ -29,4 +33,25 @@ public class AdminServiceImpl implements AdminService {
 		return new UserResponseDTO("User status updated successfully", user.getUserId(), HttpStatus.OK);
 	}
 
+	@Override
+	public List<UserDetails> getAllUsers() {
+		List<User> all = userRepo.findAll();
+		List<UserDetails> allUsers = new ArrayList<>();
+		UserDetails user = null;
+		if (!all.isEmpty()) {
+			for (User u : all) {
+				if (!u.getRole().equalsIgnoreCase("admin")) {
+					user = new UserDetails(u.getUserId(), u.getName(), u.getEmail(), u.isActive(), u.getCreatedAt());
+					allUsers.add(user);
+				}
+			}
+		}
+		return allUsers;
+
+	}
+
+	@Override
+	public Long getUserCount() {
+		return userRepo.countByRoleIgnoreCase("User");
+	}
 }
