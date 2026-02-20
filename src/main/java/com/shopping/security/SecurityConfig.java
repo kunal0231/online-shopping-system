@@ -2,6 +2,7 @@ package com.shopping.security;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -40,9 +41,7 @@ public class SecurityConfig {
 	public AuthenticationProvider authenticationProvider(PasswordEncoder passwordEncoder) {
 
 		DaoAuthenticationProvider provider = new DaoAuthenticationProvider(customUserDetailsService);
-
 		provider.setPasswordEncoder(passwordEncoder);
-
 		return provider;
 	}
 
@@ -54,12 +53,23 @@ public class SecurityConfig {
 		http.csrf(csrf -> csrf.disable())
 
 				.authorizeHttpRequests(auth -> auth
+
+						// Public endpoints
 						.requestMatchers("/user/register", "/user/login", "/swagger-ui/**", "/v3/api-docs/**")
 						.permitAll()
 
-						.requestMatchers("/admin/**").hasRole("ADMIN")
+						// ================= PRODUCT SECURITY =================
 
-						.requestMatchers("/user/**").hasRole("USER")
+						// ADMIN can create/update/delete
+						.requestMatchers(HttpMethod.POST, "/products/**").hasRole("ADMIN")
+						.requestMatchers(HttpMethod.PUT, "/products/**").hasRole("ADMIN")
+						.requestMatchers(HttpMethod.DELETE, "/products/**").hasRole("ADMIN")
+
+						// USER can view products
+						.requestMatchers(HttpMethod.GET, "/products/**").hasRole("USER")
+
+						// Existing role configs
+						.requestMatchers("/admin/**").hasRole("ADMIN").requestMatchers("/user/**").hasRole("USER")
 
 						.anyRequest().authenticated())
 
@@ -73,6 +83,7 @@ public class SecurityConfig {
 		return http.build();
 	}
 
+	// ================= AUTHENTICATION MANAGER =================
 	@Bean
 	public AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
 		return config.getAuthenticationManager();
